@@ -13,7 +13,7 @@ class SpringKotlinPostgresDemoApplication {
     @Bean
     fun initializeDatabase(wordRepository: WordRepository): CommandLineRunner {
         return CommandLineRunner {
-            wordRepository.save(WordEntity(word = "serverless salad infra pal world"))
+            wordRepository.save(WordEntity(word = "Serverless Salad Infrapal World"))
         }
     }
 }
