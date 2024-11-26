@@ -1,4 +1,50 @@
-# name: Deploy to AWS ECR
+# # name: Deploy to AWS ECR
+
+# # on:
+# #   push:
+# #     branches:
+# #       - main
+
+# # env:
+# #   AWS_REGION: "eu-central-1"                   # set this to your preferred AWS region, e.g. us-west-1
+  
+# # jobs:
+# #   deploy:
+# #     runs-on: ubuntu-latest
+
+# #     permissions:
+# #       contents: read
+# #       id-token: write
+
+# #     steps:
+# #       # Checkout the code
+# #       - name: Checkout Code
+# #         uses: actions/checkout@v3
+
+# #       # Set up AWS credentials
+# #       - name: Configure AWS credentials
+# #         uses: aws-actions/configure-aws-credentials@v4
+# #         with:
+# #           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+# #           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+# #           aws-region: ${{ env.AWS_REGION }}
+          
+# #       # Login to Amazon ECR
+# #       - name: Login to Amazon ECR
+# #         id: login-ecr
+# #         uses: aws-actions/amazon-ecr-login@v2
+
+# #       # Build and tag the Docker image
+# #       - name: Build and Tag Docker Image
+# #         run: |
+# #           docker build -t kotlin-spring-postgres-demo-app .
+# #           docker tag kotlin-spring-postgres-demo-app:latest ${{ steps.login-ecr.outputs.registry }}/kotlin-spring-postgres-demo-app:latest
+
+# #       # Push the Docker image to Amazon ECR
+# #       - name: Push Docker Image to Amazon ECR
+# #         run: |
+# #           docker push ${{ steps.login-ecr.outputs.registry }}/kotlin-spring-postgres-demo-app:latest
+# name: Deploy to Public AWS ECR
 
 # on:
 #   push:
@@ -6,7 +52,7 @@
 #       - main
 
 # env:
-#   AWS_REGION: "eu-central-1"                   # set this to your preferred AWS region, e.g. us-west-1
+#   AWS_REGION: "us-east-1"                   # Your preferred AWS region
   
 # jobs:
 #   deploy:
@@ -28,65 +74,54 @@
 #           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
 #           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 #           aws-region: ${{ env.AWS_REGION }}
-          
-#       # Login to Amazon ECR
-#       - name: Login to Amazon ECR
-#         id: login-ecr
-#         uses: aws-actions/amazon-ecr-login@v2
+
+#       # Authenticate to Amazon Public ECR
+#       - name: Login to Public ECR
+#         run: |
+#           aws ecr-public get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin public.ecr.aws
 
 #       # Build and tag the Docker image
 #       - name: Build and Tag Docker Image
 #         run: |
 #           docker build -t kotlin-spring-postgres-demo-app .
-#           docker tag kotlin-spring-postgres-demo-app:latest ${{ steps.login-ecr.outputs.registry }}/kotlin-spring-postgres-demo-app:latest
+#           docker tag kotlin-spring-postgres-demo-app:latest public.ecr.aws/b1y7k5v4/kotlin-spring-postgres-demo-app:latest
 
-#       # Push the Docker image to Amazon ECR
-#       - name: Push Docker Image to Amazon ECR
+#       # Push the Docker image to Amazon Public ECR
+#       - name: Push Docker Image to Public ECR
 #         run: |
-#           docker push ${{ steps.login-ecr.outputs.registry }}/kotlin-spring-postgres-demo-app:latest
-name: Deploy to Public AWS ECR
+#           docker push public.ecr.aws/b1y7k5v4/kotlin-spring-postgres-demo-app:latest
+name: Deploy to GitHub Container Registry
 
 on:
   push:
     branches:
       - main
 
-env:
-  AWS_REGION: "us-east-1"                   # Your preferred AWS region
-  
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
-      id-token: write
+      packages: write  # Required to push to GitHub Container Registry
 
     steps:
       # Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Set up AWS credentials
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      # Authenticate to Amazon Public ECR
-      - name: Login to Public ECR
+      # Authenticate to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
         run: |
-          aws ecr-public get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin public.ecr.aws
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       # Build and tag the Docker image
       - name: Build and Tag Docker Image
         run: |
           docker build -t kotlin-spring-postgres-demo-app .
-          docker tag kotlin-spring-postgres-demo-app:latest public.ecr.aws/b1y7k5v4/kotlin-spring-postgres-demo-app:latest
+          docker tag kotlin-spring-postgres-demo-app:latest ghcr.io/${{ github.repository_owner }}/kotlin-spring-postgres-demo-app:latest
 
-      # Push the Docker image to Amazon Public ECR
-      - name: Push Docker Image to Public ECR
+      # Push the Docker image to GHCR
+      - name: Push Docker Image to GitHub Container Registry
         run: |
-          docker push public.ecr.aws/b1y7k5v4/kotlin-spring-postgres-demo-app:latest
+          docker push ghcr.io/${{ github.repository_owner }}/kotlin-spring-postgres-demo-app:latest
