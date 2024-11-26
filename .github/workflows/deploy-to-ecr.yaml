@@ -52,7 +52,7 @@ on:
       - main
 
 env:
-  AWS_REGION: "eu-central-1"                   # Your preferred AWS region
+  AWS_REGION: "us-east-1"                   # Your preferred AWS region
   
 jobs:
   deploy:
